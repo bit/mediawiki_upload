@@ -1,0 +1,14 @@
+mediawiki_upload
+
+upload files to mediawiki
+
+Usage: mediawiki_upload.py [options] filename 
+
+ Options:
+  -h, --help            show this help message and exit
+  -u USERNAME, --username=USERNAME
+                        wiki username
+  -p PASSWORD, --password=PASSWORD
+                        wiki password
+  -w URL, --url=URL     wiki api url
+

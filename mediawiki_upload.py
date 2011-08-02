@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # vi:si:et:sw=4:sts=4:ts=4
-# GPL 3+ 2011
+# MIT/GPL3+ 2011
 import cookielib
 import itertools
 import json
@@ -124,7 +124,8 @@ class Mediawiki(object):
         ]
         r = self.login()
         if not r['login']['result'] == 'Success':
-            print r
+            if DEBUG:
+                print r
             raise Exception('login failed')
 
     def post(self, form):
@@ -199,6 +200,7 @@ class Mediawiki(object):
         chunk.write(f.read(CHUNKSIZE))
         f.close()
         chunk.seek(0)
+        #Upload first chunk and get filekey for further chunks
         r = self.api('upload', {
             'comment': comment,
             'filename': fn,
@@ -206,16 +208,25 @@ class Mediawiki(object):
             'offset': str(offset),
             'token': token
         }, {'chunk': chunk})
-        print r 
         offset += CHUNKSIZE
+        if 'error' in r:
+            if DEBUG:
+                print r['error']
+            return r
         filekey = r['upload']['filekey']
         while offset < filesize:
+            if DEBUG:
+                print r
+            if 'error' in r or r.get('status', {}).get('code', 200) != 200 or \
+                'error' in r.get('upload', {}):
+                return r
             chunk = StringIO()
             f = open(filename)
             f.seek(offset)
             chunk.write(f.read(CHUNKSIZE))
             f.close()
             chunk.seek(0)
+            #Upload chunk at offset
             r = self.api('upload', {
                 'filename': fn,
                 'filesize': str(filesize),
@@ -224,10 +235,6 @@ class Mediawiki(object):
                 'token': token
             }, {'chunk': chunk})
             offset += CHUNKSIZE
-            print r
-            if 'error' in r or r.get('status', {}).get('code', 200) != 200 or \
-                'error' in r.get('upload', {}):
-                return r
         #Finalize upload and move out of stash
         r = self.api('upload', {
             'filename': fn,
@@ -236,7 +243,8 @@ class Mediawiki(object):
             'text': text,
             'comment': comment
         })
-        #print r
+        if DEBUG:
+            print r
         return r
 
     def edit_page(self, pagename, text, comment=''):
@@ -260,8 +268,7 @@ def upload_file(filename, username, password, mediawiki_url, info={}):
     #description = DESCRIPTION % info
     description = DESCRIPTION
     r = wiki.upload(filename, 'Initial Upload', description)
-    print r
-    if r['upload']['result'] == 'Success':
+    if 'upload' in r and r['upload']['result'] == 'Success':
         print 'Uploaded to', r['upload']['imageinfo']['descriptionurl']
     else:
         print 'Upload failed.'

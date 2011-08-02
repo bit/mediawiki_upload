@@ -18,7 +18,7 @@ from StringIO import StringIO
 
 __version__ = 0.1
 
-DEBUG=1
+DEBUG=False
 USER_AGENT='mediawiki_upload/%s (+http://www.mediawiki.org/wiki/User:BotInc/mediawiki_upload)' % __version__
 DESCRIPTION = '''
 == {{int:filedesc}} ==
@@ -279,6 +279,8 @@ if __name__ == "__main__":
 
     usage = "Usage: %prog [options] filename"
     parser = OptionParser(usage=usage)
+    parser.add_option('-d', '--debug', dest='debug',
+                      help='enable debug', action="store_true")
     parser.add_option('-u', '--username', dest='username', help='wiki username', type='string')
     parser.add_option('-p', '--password', dest='password', help='wiki password', type='string')
     parser.add_option('-w', '--url', dest='url',
@@ -290,6 +292,7 @@ if __name__ == "__main__":
 
     (opts, args) = parser.parse_args()
 
+    DEBUG = opts.debug
     if None in (opts.username, opts.password) or not args:
         parser.print_help()
         sys.exit(-1)

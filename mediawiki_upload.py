@@ -136,6 +136,8 @@ class Mediawiki(object):
             request.add_header('Content-length', len(body))
             request.add_data(body)
             result = self.opener.open(request).read().strip()
+            if DEBUG:
+                print result
             return json.loads(result)
         except urllib2.HTTPError, e:
             if DEBUG:
